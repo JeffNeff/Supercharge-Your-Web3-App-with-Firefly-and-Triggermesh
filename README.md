@@ -1,33 +1,77 @@
-// INITAL DRAFT
+# Leveraging Modern Blockchain Technology at your Event Broker
 
-When designing EDA's, there are a lot of cool features you get when using a Blockchain data structure as your presistnce layer.
+If you are designing an Event Driven Architecture (EDA) for your application with the following requirements, then you may want to consider replacing your existing broker with a similar architecture covered in this article.
 
-// list benifits
+* One time guarenteed event delivery. (That means we know for sure that the event was delivered to, and properly consumed by, the consumer.)
+
+* Ablility to store events and deliver them to consumers at a later time. ( possibly even consumers that do not exist yet. )
+
+* Maintaining a history of events in the order that they occured is important.
+
+*
 
 
 
-## How to design and implement an EDA with a Blockchain.
+## Architecture Overview
+
+Obviously we do not want to build everything from scratch, so to bootstrap our solution we will leverage the Hyperledger project [Firefly](https://hyperledger.github.io/firefly/) as a starting point. Firefly does all of the hard work for us by exposing a rest api with a set of endpoints that we can use to manage our events.
+
+### What is Firefly
+
+// Breif overview of Firefly
+
+## Setup and Configuration
+
+### Prerequisites
+
+* [Docker](https://docs.docker.com/get-docker/)
+* [Docker Compose](https://docs.docker.com/compose/install/)
+* [golang](https://golang.org/doc/install)
+* [Firefly CLI](https://hyperledger.github.io/firefly/gettingstarted/firefly_cli.html)
 
 
-Firefly makes this really simple.
+### Setup
 
-Set up a firefly dev enviorment.
+After ensuring that that Docker is running. Create a new Firefly Project named `dev` with one member.
 
-Meet the prerequisites -> //
-
-Follow along here to install the CLI  -> https://hyperledger.github.io/firefly/gettingstarted/firefly_cli.html
-
-Then set up a development env
 ```
-ff init
-  dev
-ff start dev
+ff init dev 1
 ```
 
-// TODO: Breif (how to verify)
+Then start the enviorment. This will return two URL's that we will use later.
+
+```
+ ff start dev
+this will take a few seconds longer since this is the first time you're running this stack...
+done
+
+Deployed TokenFactory contract to: 0x8389b6b85bbbaa7710bb76f1418227728a08bd7d
+Source code for this contract can be found at /home/jeff/.firefly/stacks/dev/runtime/contracts/source
+
+Web UI for member '0': http://127.0.0.1:5000/ui
+Sandbox UI for member '0': http://127.0.0.1:5109
+
+To see logs for your stack run:
+
+ff logs dev
+
+```
+
+I would recommend spending some time familiarizing yourself with the Firefly docs. They are very well structured and easy to follow. [https://hyperledger.github.io/firefly/](https://hyperledger.github.io/firefly/)
+
+### Project Configuration
+
+Now we need two projects to hold an example event consumer and producer.
+
+Create two new folders named `event-producer` and `event-consumer`. (These will be go projects so put them in your GOPATH if they need to be there.
+
+```
+mkdir event-producer
+mkdir event-consumer
+```
+
 
 After verifying everything is operationl, we can begin designing our architecture.
-
 
 Its good practice to implement/maintain a well currated collection of data schemas that are relevant to your architecture.
 This is a great place to start off development (IMO).
@@ -92,9 +136,39 @@ func broadcastNewDataType() {
 }
 ```
 
+If you are not a fan of golang. here is a curl request that does the same thing:
+
+```
+curl --location --request POST 'http://127.0.0.1:5000/api/v1/namespaces/default/broadcast/datatype' \
+--header 'accept: application/json' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "name": "widget",
+  "version": "0.0.2",
+  "value": {
+    "$id": "https://example.com/widget.schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Widget",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "The unique identifier for the widget."
+      },
+      "name": {
+        "type": "string",
+        "description": "The person'\''s last name."
+      }
+    }
+  }
+}'
+```
+
 
 Now lets create some functionality to post our Widget data to the Blockchain.
 
+
+One way we could accomplish this in golang:
 ```
 // https://hyperledger.github.io/firefly/tutorials/broadcast_data.html
 func broadcastInterface(ev interface{}) {
@@ -143,16 +217,21 @@ func broadcastInterface(ev interface{}) {
 }
 ```
 
-We now need to create an interface to consume this data.
+In curl this can be accomplished via:
+```
+curl --location --request POST 'http://127.0.0.1:5000/api/v1/namespaces/default/messages/broadcast' \
+--header 'accept: application/json' \
+--header 'Content-Type: application/json' \
+--data-raw '{"name":"jeff","id":"12"}'
+```
 
+We now need to create an interface to consume this data.
 
 This can be acomplished a number of ways, but ff provides a simple way to do this with lots of included functionality via (`Subscriptions`)[https://hyperledger.github.io/firefly/reference/types/subscription.html].
 
 
 `Subscriptions` provide an interface for us to not only consume the events, but also to define which events are and are not consumed by the use of filtering and regex expressions against the event data.
 
-
-```
 
 Define and Create a new Subscription for our Event Consumer.
 
@@ -352,6 +431,10 @@ func downloadMessage(id string) {
 }
 ```
 Now that everything is wired up, give it a try!
+
+Here is the complete code for the example.
+```
+
 
 After successfully consuming a few messages, try shutting down the consumer service, emit a message to the chain, and then start the consumer up.. you might find a, plesent, un-expected result.
 
