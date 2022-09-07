@@ -15,6 +15,10 @@ How does one easily integrate these various data sources into our Firefly eventi
 
 It turns out, with realtive ease Triggermesh event sources can be "plugged" into the Firefly stack to easily bring in events from a variety of off-chain sources.
 
+// Clearer picture of what we are trying to build
+
+// Diagram of what we intend to build. 
+
 
 ## Setup Local FF Environment
 ### Prerequisites
