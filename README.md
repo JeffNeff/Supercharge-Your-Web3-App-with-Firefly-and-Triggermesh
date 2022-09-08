@@ -1,23 +1,17 @@
-# Integrating Triggermesh Event Sources into Firefly
-
+# Supercharge Your Web3 App with Firefly and Triggermesh
 
 ## Introduction
-Firefly exposes an awesome eventing system that makes it easy to start designing your applications in an event driven mannor. They expose a well refined schema registry, a well thought-out pub-sub scription system, REST api's and SDK's for managing your eventing infrastructure, and awesome user interfaces.
 
-With Firefly, our applications can create, subscribe, and react to on-chain events with realitve ease. However, what about off-chain events? What if we want to react to events from a cloud service, or a third party service with the same workflow as our on-chain events?
+Firefly exposes an awesome eventing system that enforces event driven application design. They expose a well refined schema registry, a well thought-out pub-sub scription system, REST api's and SDK's for managing your eventing infrastructure, and awesome user interfaces for managing everything.
 
-Immagine, for example, that the web3 application we are developing requires data from a Kafka topic or possibly we just want to expose endpoint(s) that we can point/subscribe webhook events to?
+With Firefly, our applications can create, subscribe, and react to on-chain events with realitve ease. However, what about off-chain events? What if we want to react to events from a cloud service, or third party service(s) with the same workflow as our on-chain events?
 
+By integrateing Triggermesh with Firefly, we can now create a unified eventing system that allows us to react to events from any source, and any destination.
 
-## Purpose Statement
+During this guide we will be looking at how to integrate [Triggermesh](https://www.triggermesh.com/) Event Sources into a  [Firefly](https://hyperledger.github.io/firefly/overview/) application.
 
-The question we are looking to solve with this blog is:
-
-```
-How does one easily integrate these various data sources into our Firefly eventing workflow?
-```
-
-It turns out, with realtive ease Triggermesh event sources can be "plugged" into the Firefly stack to easily bring in events from a variety of off-chain sources.
+We will be creating a new Firefly development enviorment and then integrate both the [Triggermesh Kafka Source]() and the
+[Triggermesh Webhook Source]() into this enviorment, effectively exposeing an HTTP endpoint that accepts arbitrary JSON data and reading from a particular Topic off a Kafa stream to create events that can be accesed via the standard Firefly API(s)/SDK(s)).
 
 
 ## Setup Local FF Environment
@@ -67,7 +61,7 @@ To install `FireMesh`, into your Firefly environment, find the docker-compose fi
 
 ```yaml
     firemesh:
-        image: firemesh
+        image: gcr.io/triggermesh/firemesh
         ports:
             - 8080
         environment:
@@ -131,7 +125,7 @@ ff start dev
 ```
 
 
-And thats it! We can now expect to see any events that appear in our Kafka stream or that we send to our Webhook source should appear in our Firefly event stream.
+And thats it! We can now expect to see any events that appear in our Kafka stream or that we send to our Webhook source should appear in our Firefly event stream!
 
 ### Webhook Source Example
 
@@ -144,9 +138,9 @@ curl -X POST -H "Content-Type: application/json" -d '{"message":"Hello World"}' 
 
 ### Subscribe to Firefly Events
 
-To view the events in the Firefly event stream, First create a new subscription.
+**Note** If you just want a quick way to view all of your events you can use the FireFly Web UI. The Web UI is a great way to see what is going on in your FireFly stack. You can find the Web UI in the logs of the terminal that you started the FireFly stack in.
 
-This will create a new subscription, `app1`, with a "catch-all" filter.
+To begin consuming the events from the Firefly event stream, first create a new subscription. This can be accomplished with the following command:
 
 ```
 curl --location --request POST 'http://127.0.0.1:5000/api/v1/namespaces/default/subscriptions' \
@@ -176,10 +170,12 @@ curl --location --request POST 'http://127.0.0.1:5000/api/v1/namespaces/default/
 	}
   }'
 ```
+Above we just create a new subscription, `app1`, with a "catch-all" filter.
 
-Now that the subscription is in place.. we can begin consuming messages at any point.
+Now that the subscription is in place.. we can begin consuming messages from it.
 
 
+One way we can do this is with the `websocat` cli (but any ws client will work).
 
 ```bash
 websocat "ws://127.0.0.1:5000/ws?namespace=default&name=app1&autoack=true"
@@ -187,3 +183,39 @@ websocat "ws://127.0.0.1:5000/ws?namespace=default&name=app1&autoack=true"
 
 Notice this will not show us the data, only a refrence to this data. we will have to retrieve the data
 via another API call.
+
+### Deploying the Sources in production
+
+Its actually much easier deploying the Triggermesh event sources in production than it is in development. All of the Sources come with a corresponding CRD that makes it easy to deploy them into a Kubernetes cluster.
+
+For example, to deploy the Kafka Source, after installing Triggermesh , we can use a manifest like the following:
+
+```yaml
+apiVersion: sources.triggermesh.io/v1alpha1
+kind: KafkaSource
+metadata:
+  name: oci-streaming-source
+spec:
+  groupID: <group-id>
+  bootstrapServers:
+    - <bootstrap-server>
+  topics:
+    - <topic>
+  auth:
+    saslEnable: true
+    tlsEnable: true
+    securityMechanism: PLAIN
+    username:
+    password:
+      valueFromSecret:
+        name: oci-kafka
+        key: pass
+  sink:
+	# Where to send the events goes here
+```
+
+
+<!--
+### Leveraging Other Triggermesh Sources
+
+The Triggermesh project has a number of other event sources that can be used to integrate with Firefly. The process for deploying the sources in production is well documented in the Triggermesh [documentation](docs.triggermesh.io). However, they are not documented to be deployed in this mannor. So in order to deploy them in this mannor, you need to know what the expected enviorment variables are for each one.  -->
