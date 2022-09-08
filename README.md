@@ -98,7 +98,7 @@ After creating the required Kafka resources, we can add the following to the `se
       image: gcr.io/triggermesh/kafkasource-adapter
       environment:
         # Stream Pool Name
-        TOPICS: id
+        TOPICS:
         # <Tennancy>/<email>/<OCID>
         USERNAME:
         # Auth Token
