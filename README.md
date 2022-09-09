@@ -8,7 +8,10 @@ With Firefly, our applications can create, subscribe, and react to on-chain even
 
 By integrateing Triggermesh with Firefly, we can now create a unified eventing system that allows us to react to events from any source, and any destination.
 
-During this guide we will be looking at how to integrate [Triggermesh](https://www.triggermesh.com/) Event Sources into a  [Firefly](https://hyperledger.github.io/firefly/overview/) application.
+During this guide we will be looking at how to integrate [Triggermesh](https://www.triggermesh.com/) Event Sources into a [Firefly](https://hyperledger.github.io/firefly/overview/) application with the use [FireMesh](https://github.com/triggermesh/FireMesh). FireMesh is a beta Triggermesh product that allows us to easily integrate Triggermesh Event Sources, and soon Targets, into your Firefly eventing workflow.
+
+
+## Objective
 
 We will be creating a new Firefly development enviorment and then integrate both the [Triggermesh Kafka Source]() and the
 [Triggermesh Webhook Source]() into this enviorment, effectively exposeing an HTTP endpoint that accepts arbitrary JSON data and reading from a particular Topic off a Kafa stream to create events that can be accesed via the standard Firefly API(s)/SDK(s)).
