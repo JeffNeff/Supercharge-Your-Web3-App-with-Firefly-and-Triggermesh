@@ -218,7 +218,49 @@ spec:
 ```
 
 
-<!--
+
 ### Leveraging Other Triggermesh Sources
 
-The Triggermesh project has a number of other event sources that can be used to integrate with Firefly. The process for deploying the sources in production is well documented in the Triggermesh [documentation](docs.triggermesh.io). However, they are not documented to be deployed in this mannor. So in order to deploy them in this mannor, you need to know what the expected enviorment variables are for each one.  -->
+The Triggermesh project has a number of other event sources that can be used to integrate with Firefly. The process for deploying the sources in production is well documented in the Triggermesh [documentation](docs.triggermesh.io). However, they are not documented to be deployed in this mannor. So in order to deploy them via docker-compose, you need to know what the expected enviorment variables are for each of the Source componenets you require.
+
+Instead of listing all of the enviorment variables here, I will instead show you how to retrieve them for yourself. (teach a man to fish, right?)
+
+#### Find the Required Environment Variables
+
+For this example we will be going after the Oracle Cloud Metrics Source (or OCIMetricsSource).
+
+* Navigate to the folder containing the reconciler for all of the Triggermesh Source components:
+```
+https://github.com/triggermesh/triggermesh/tree/main/pkg/sources/reconciler
+```
+
+In this folder you will find a folder for every Triggermesh Source. For example, the OCIMetricsSource is located here. In these folders contains the `Reconciler`, or the code that is responsible for building and deploying a Source adapter (including adding the enviorment variables). So here we can find the enviorment variables that are required for every Source, including the OCIMetricsSource in question.
+
+
+* Navigate to the OCIMetricsSource reconciler:
+```
+https://github.com/triggermesh/triggermesh/tree/main/pkg/sources/reconciler/ocimetricssource
+```
+
+In this folder, the only file that we care about is `adapter.go`. Here will will be able to find the enviorment variables that are required for the OCIMetricsSource.
+
+In this file we can find all of the enviorment variables are exported at the top as constants [here.](https://github.com/triggermesh/triggermesh/blob/bfacde991c3b5400afd1cea94fd736a5b5f39e0b/pkg/sources/reconciler/ocimetricssource/adapter.go#L35)
+
+```go
+const (
+	oracleAPIKey            = "ORACLE_API_PRIVATE_KEY"
+	oracleAPIKeyPassphrase  = "ORACLE_API_PRIVATE_KEY_PASSPHRASE"
+	oracleAPIKeyFingerprint = "ORACLE_API_PRIVATE_KEY_FINGERPRINT"
+	userOCID                = "ORACLE_USER_OCID"
+	tenantOCID              = "ORACLE_TENANT_OCID"
+	oracleRegion            = "ORACLE_REGION"
+	pollingFrequency        = "ORACLE_METRICS_POLLING_FREQUENCY"
+	metrics                 = "ORACLE_METRICS"
+)
+```
+
+If we scroll down to the `MakeAppEnv` function, we can see how each of these variables are being set [here](https://github.com/triggermesh/triggermesh/blob/bfacde991c3b5400afd1cea94fd736a5b5f39e0b/pkg/sources/reconciler/ocimetricssource/adapter.go#L79).
+
+***IMPORTANT*** NOT EVERY TRIGGERMESH SOURCE COMPONENT CURRENTLY WORKS WITH DOCKER-COMPOSE. If there is any logic in the `Reconciler` other than setting the enviorment variables, then the Source will not work in a development enviorment like this, and you will have to deploy it in a Kubernetes cluster.
+
+**Note:** Just in case you are curious, and want to know how these enviorment variables are then used by the Source adapter, you can find the code for the Source adapters [here](https://github.com/triggermesh/triggermesh/tree/main/pkg/sources/adapter)
