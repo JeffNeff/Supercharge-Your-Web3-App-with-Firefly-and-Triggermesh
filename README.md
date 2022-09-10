@@ -22,7 +22,6 @@ We will be creating a new Firefly development enviorment and then integrate both
 
 * [Docker](https://docs.docker.com/get-docker/)
 * [Docker Compose](https://docs.docker.com/compose/install/)
-* [golang](https://golang.org/doc/install)
 * [Firefly CLI](https://hyperledger.github.io/firefly/gettingstarted/firefly_cli.html)
 
 ### Setup
